@@ -1,0 +1,79 @@
+tick this;
+
+var mobs = [
+  "armor_stand", "bat", "bee",
+  "blaze", "boat", "cat",
+  "cave_spider", "chest_minecart", "chicken",
+  "cod", "cow", "creeper",
+  "dolphin", "donkey", "drowned",
+  "elder_guardian", "ender_dragon", "ender_pearl",
+  "enderman", "endermite", "evoker",
+  "eye_of_ender", "fireball", "fox",
+  "furnace_minecart", "ghast", "giant",
+  "guardian", "hopper_minecart", "horse",
+  "husk", "illusioner", "iron_golem",
+  "item", "llama", "magma_cube",
+  "minecart", "mooshroom", "mule",
+  "ocelot", "painting", "panda",
+  "parrot", "phantom", "pig",
+  "pillager", "polar_bear", "pufferfish",
+  "rabbit", "ravager", "salmon",
+  "sheep", "shulker", "silverfish",
+  "skeleton", "skeleton_horse", "slime",
+  "small_fireball", "snow_golem", "spider",
+  "squid", "stray", "tnt_minecart",
+  "trader_llama", "tropical_fish", "turtle",
+  "vex", "villager", "vindicator",
+  "wandering_trader", "witch", "wither",
+  "wither_skeleton", "wolf", "zombie",
+  "zombie_horse", "zombie_pigman", "zombie_villager"
+];
+
+/execute as @a at @s run $function 'player' {
+  /execute if score @s right_click matches 1.. run $function  {
+    /scoreboard players set i global 50
+    /execute if data entity @s SelectedItem.tag{CustomModelData:100} positioned ~ ~1.62 ~ run $function 'raycast' {
+      /scoreboard players remove i global 1
+      /execute at @e[dx=0,limit=1,sort=nearest,type=#pokeball:storable] run $function 'get_mob' {
+        /scoreboard players set i global -1
+        /execute as @e[limit=1,sort=nearest,distance=..0.01] run $function  {
+          //summon item ~ ~ ~ {
+            Item:{
+              id:"minecraft:parrot_spawn_egg",
+              Count:1b,
+              tag:{CustomModelData:100,display:{Name:'{"text":"Pokeball","italic":false}'},EntityTag:{}}
+            },
+            Tags:["spawn_egg"]
+          }//
+          /execute unless data entity @s CustomName run data modify entity @e[type=item,tag=spawn_egg,limit=1,sort=nearest,distance=..0.2] Item.tag.EntityTag.CustomName set value ""
+          /data modify entity @e[type=item,tag=spawn_egg,limit=1,sort=nearest,distance=..0.2] Item.tag.EntityTag merge from entity @s
+          /data remove entity @e[type=item,tag=spawn_egg,limit=1,sort=nearest,distance=..0.2] Item.tag.EntityTag.Pos
+          /data remove entity @e[type=item,tag=spawn_egg,limit=1,sort=nearest,distance=..0.2] Item.tag.EntityTag.UUIDLeast
+          /data remove entity @e[type=item,tag=spawn_egg,limit=1,sort=nearest,distance=..0.2] Item.tag.EntityTag.UUIDMost
+          /tag @s add Mob
+          /setblock ~ 0 ~ oak_wall_sign{Text1:'[{"selector":"@e[tag=Mob,dx=5,dz=5,dy=255,limit=1]","italic":false}," Pokeball"]'}
+          /tag @s remove Mob
+          /data modify entity @e[type=item,tag=spawn_egg,sort=nearest,distance=..0.2,limit=1] Item.tag.display.Name set from block ~ 0 ~ Text1
+          /setblock ~ 0 ~ bedrock
+          for mob in mobs  {
+            //execute if entity @s[type=$mob]
+            run data modify entity @e[type=item,tag=spawn_egg,limit=1,sort=nearest,distance=..0.2]
+            Item.tag.EntityTag.id set value "minecraft:$mob"//
+          }
+          /tp @e[type=item,tag=spawn_egg,limit=1,sort=nearest,distance=..0.2] @p[scores={right_click=1..}]
+          /tp @s ~ -400 ~
+          /kill @s
+        }
+        /replaceitem entity @s weapon.mainhand air
+        /playsound minecraft:block.beacon.activate master @s
+      }
+      /execute if score i global matches 1.. positioned ^ ^ ^0.1 run function pokeball:raycast
+    }
+    /scoreboard players set @s right_click 0
+  }
+  /execute if score @s spawn_entity matches 1.. run $function 'pokeball:give_pokeball' {
+    /scoreboard players set @s spawn_entity 0
+    /execute unless predicate pokeball:holding_nothing run replaceitem entity @s weapon.offhand minecraft:carrot_on_a_stick{display:{Name:'{"text":"Empty Pokeball","italic":false}'},Unbreakable:1b,CustomModelData:100}
+    /execute if predicate pokeball:holding_nothing run replaceitem entity @s weapon.mainhand minecraft:carrot_on_a_stick{display:{Name:'{"text":"Empty Pokeball","italic":false}'},Unbreakable:1b,CustomModelData:100}
+  }
+}

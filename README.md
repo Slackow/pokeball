@@ -1,1 +1,1 @@
-"# pokeball" 
+A simple test datapack for a templating language,
